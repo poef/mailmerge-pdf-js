@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mailmerge PDF proof of concept</title>
+  <link rel="stylesheet" href="./src/demo.css">
+</head>
+<body>
+  <main>
+    <h1>Mailmerge PDF proof of concept</h1>
+    <p class="intro">
+      This browser-only demo turns a deliberately small HTML template into one combined PDF.
+      It uses <code>pdf-lib</code> directly instead of rendering the page to canvas.
+    </p>
+
+    <section class="panel">
+      <h2>1. Select people</h2>
+      <div id="peopleList" class="people-list"></div>
+    </section>
+
+    <section class="panel">
+      <h2>2. Optional school logo</h2>
+      <p>
+        The template uses <code>&lt;img src="school-logo"&gt;</code>. Uploading a PNG or JPEG here
+        replaces the included demo logo.
+      </p>
+      <input id="logoInput" type="file" accept="image/png,image/jpeg">
+    </section>
+
+    <section class="panel">
+      <h2>3. Template</h2>
+      <p>
+        Supported tags in this proof of concept: <code>h1</code>, <code>h2</code>, <code>p</code>,
+        <code>br</code>, <code>strong</code>, <code>em</code>, <code>span</code>, <code>img</code>,
+        and <code>&lt;div class="page-break"&gt;</code>.
+      </p>
+      <textarea id="templateInput" spellcheck="false"></textarea>
+    </section>
+
+    <section class="actions">
+      <button id="generateButton">Generate merged PDF</button>
+      <span id="status" role="status"></span>
+    </section>
+  </main>
+
+  <script type="module" src="./src/demo.js"></script>
+</body>
+</html>
