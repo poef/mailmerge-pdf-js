@@ -1,46 +1,132 @@
 <!doctype html>
-<html lang="nl">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mailmerge PDF proof of concept</title>
-  <link rel="stylesheet" href="./src/demo.css">
+  <title>Mail merge HTML to PDF POC</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      color: #222;
+      background: #f6f7f9;
+    }
+
+    header,
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    header {
+      padding-bottom: 8px;
+    }
+
+    .panel {
+      background: white;
+      border: 1px solid #d7dce2;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-right: 18px;
+      margin-bottom: 12px;
+    }
+
+    select,
+    button {
+      font: inherit;
+      padding: 8px 10px;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 460px;
+      font: 13px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace;
+      box-sizing: border-box;
+      border: 1px solid #ccd2d8;
+      border-radius: 6px;
+      padding: 12px;
+    }
+
+    .message {
+      padding: 10px 12px;
+      border-radius: 6px;
+      background: #eef2ff;
+      border: 1px solid #c9d3ff;
+      margin-top: 12px;
+    }
+
+    .message.success {
+      background: #edf8ef;
+      border-color: #b9e0bf;
+    }
+
+    .message.warning {
+      background: #fff8e5;
+      border-color: #efd48d;
+    }
+
+    .message.error {
+      background: #fff0f0;
+      border-color: #e6b5b5;
+    }
+
+    #validation {
+      margin: 12px 0 0;
+      padding-left: 24px;
+    }
+
+    .notes {
+      line-height: 1.55;
+    }
+  </style>
 </head>
 <body>
+  <header>
+    <h1>Mail merge HTML to PDF POC</h1>
+    <p>This version targets the currently used school-account activation templates. It validates strict enough to reject malformed tags, strips legacy <code>ar:*</code> attributes, fills <code>{field}</code> placeholders as text, and renders with <code>pdf-lib</code>.</p>
+  </header>
+
   <main>
-    <h1>Mailmerge PDF proof of concept</h1>
-    <p class="intro">
-      This browser-only demo turns a deliberately small HTML template into one combined PDF.
-      It uses <code>pdf-lib</code> directly instead of rendering the page to canvas.
-    </p>
-
     <section class="panel">
-      <h2>1. Select people</h2>
-      <div id="peopleList" class="people-list"></div>
+      <label>
+        Template
+        <select id="templateSelect"></select>
+      </label>
+      <label>
+        <input id="externalResources" type="checkbox" checked>
+        Fetch external font CSS
+      </label>
+      <label>
+        <input id="imageFetch" type="checkbox" checked>
+        Fetch images
+      </label>
+      <button id="validate" type="button">Validate</button>
+      <button id="render" type="button">Render mail merge PDF</button>
+      <div id="message" class="message">Loading…</div>
+      <ul id="validation"></ul>
     </section>
 
     <section class="panel">
-      <h2>2. Optional school logo</h2>
-      <p>
-        The template uses <code>&lt;img src="school-logo"&gt;</code>. Uploading a PNG or JPEG here
-        replaces the included demo logo.
-      </p>
-      <input id="logoInput" type="file" accept="image/png,image/jpeg">
+      <textarea id="source" spellcheck="false"></textarea>
     </section>
 
-    <section class="panel">
-      <h2>3. Template</h2>
-      <p>
-        Supported tags in this proof of concept: <code>h1</code>, <code>h2</code>, <code>p</code>,
-        <code>br</code>, <code>strong</code>, <code>em</code>, <code>span</code>, <code>img</code>,
-        and <code>&lt;div class="page-break"&gt;</code>.
-      </p>
-      <textarea id="templateInput" spellcheck="false"></textarea>
-    </section>
-
-    <section class="actions">
-      <button id="generateButton">Generate merged PDF</button>
-      <span id="status" role="status"></span>
+    <section class="panel notes">
+      <h2>Supported subset in this POC</h2>
+      <p>Elements: document metadata, style blocks, headings, paragraphs, div/span text, strong/em/u, links, images, unordered/ordered lists, and simple table layouts used by email-style templates.</p>
+      <p>Attributes: inline <code>style</code>, <code>class</code>, <code>data-*</code>, links, image sizes/alignment, and table/cell layout attributes. Legacy <code>ar:*</code> attributes are ignored and removed before rendering.</p>
+      <p>The original Simant template is intentionally included as an expected failure because it has a malformed comment inside a <code>&lt;td&gt;</code> start tag. The fixed Simant template moves that comment outside the tag.</p>
     </section>
   </main>
 

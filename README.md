@@ -1,22 +1,20 @@
-# Mailmerge PDF proof of concept
+# Mail merge HTML to PDF POC
 
-This is a deliberately small browser-only proof of concept for generating a merged PDF from a simplified HTML template.
+This is a standalone browser proof of concept for rendering school-account activation HTML templates to mail-merge PDFs with `pdf-lib`.
 
-It uses `pdf-lib` directly. It does **not** use `html2pdf.js`, browser screenshots, or canvas-based page rendering.
+It extends the earlier simplified POC to cover the currently used templates:
 
-## What this proves
+- `templates/demeerscholen.html`
+- `templates/simant.fixed.html`
+- `templates/demeerwaarde.fixed.html`
 
-- A selected list of people can be merged into one PDF download.
-- Template fields like `{{childName}}` are safely escaped before rendering.
-- Simple HTML can be parsed with `DOMParser` and rendered through a tiny layout layer.
-- PNG/JPEG logos can be used as fixed template assets with `<img src="school-logo" class="logo">`.
-- Each selected person starts on a new page in the same final PDF.
+The original Simant and De Meerwaarde uploads are included as `*.original.html` fixtures. The Simant original is expected to fail validation because it contains a comment inside a `<td>` opening tag. The De Meerwaarde original is expected to fail validation because it contains nested `<ul>` elements directly under another `<ul>` instead of inside the preceding `<li>`. The De Meerwaarde fixed fixture corrects that nested-list markup while preserving the visible content.
 
-## Run it
+## Run
 
-Because the demo imports `pdf-lib` from a CDN as an ES module, run it through a local web server:
+Serve the folder over HTTP. ES modules and browser fetches do not work reliably from `file://` URLs.
 
-```bash
+```sh
 python3 -m http.server 8080
 ```
 
@@ -26,63 +24,61 @@ Then open:
 http://localhost:8080/
 ```
 
-When using the zip directly, first `cd` into the unzipped `mailmerge-pdf-poc` directory.
+Select a template and click **Render mail merge PDF**.
 
-## Supported template subset
+## What is supported now
 
-This proof of concept intentionally supports only:
+### HTML elements
 
-- `h1`
-- `h2`
-- `p`
-- `br`
-- `strong` / `b`
-- `em` / `i`
-- `span`
-- `img`
-- `<div class="page-break"></div>`
+The policy accepts:
 
-Unsupported elements throw an error. This is intentional: the goal is a small mailmerge print renderer, not a general HTML/CSS-to-PDF engine.
+- `html`, `head`, `body`, `meta`, `title`, `style`
+- `div`, `p`, `span`, `strong`, `b`, `em`, `i`, `u`, `br`, `a`, `img`
+- `h1`, `h2`, `h3`, `ul`, `ol`, `li`
+- `table`, `thead`, `tbody`, `tfoot`, `tr`, `td`, `th`
 
-## Supported image model
+### Attributes
 
-Images are fixed template assets, not arbitrary browser layout.
+The renderer supports the attributes used by the fixtures:
 
-The demo supports this pattern:
+- Global: `class`, `style`, `title`, `align`, `data-*`
+- Links: `href`, `target`
+- Images: `src`, `alt`, `width`, `height`, `align`
+- Tables/cells: `width`, `cellpadding`, `cellspacing`, `border`, `align`, `valign`, `bgcolor`, `colspan`, `rowspan`
+- Metadata: `charset`, `name`, `content`
+
+Attributes matching `ar:*` are ignored and stripped before rendering.
+
+### Placeholders
+
+Placeholders use the current simple form:
+
+```text
+{datum}
+{voornaam}
+{loginAlias}
+```
+
+They are replaced as text, not parsed as HTML. That keeps replacement safe by default.
+
+## Validation behavior
+
+The POC fails fast on malformed HTML syntax and on the list content-model problem found in the current fixtures. For example:
 
 ```html
-<img src="school-logo" class="logo">
+<td <!--="" logo="" --="">
 ```
 
-The JavaScript passes an asset map to the renderer:
+fails with:
 
-```js
-assets: {
-  "school-logo": {
-    bytes: logoBytes,
-    mimeType: "image/png"
-  }
-}
+```text
+Comments are not allowed inside an opening tag.
 ```
 
-PNG and JPEG are supported because `pdf-lib` supports both through `embedPng()` and `embedJpg()`.
+This is intentionally stricter than browser parsing. The goal is to catch invalid templates before PDF generation instead of letting the browser silently repair them.
 
-## Font simplification
+## Fidelity notes
 
-The proof of concept uses standard PDF Helvetica fonts to keep the first version small and avoid `fontkit`.
+This POC intentionally stays in the `pdf-lib` path and does not use `html2pdf.js`. It is not a full browser layout engine. The added renderer covers the practical subset used by the three fixtures: logos, banners, headings, paragraphs, inline formatting, lists, simple nested lists, one-column email tables, colored button cells, and footer/info blocks.
 
-For normal Dutch text this is acceptable for a first prototype. The renderer normalizes common typographic characters such as curly quotes and en/em dashes to simpler equivalents. A production version should probably embed an open font with `@pdf-lib/fontkit`, especially if templates are pasted from Word or contain less common symbols.
-
-## Where to extend next
-
-See [`ROADMAP.md`](ROADMAP.md) for the production-readiness roadmap.
-
-Good next steps, in order:
-
-1. Move `DEFAULT_STYLES` to a public template configuration object.
-2. Add fixed header/footer support.
-3. Add custom embedded font support with `@pdf-lib/fontkit`, because schools often need their own house style font.
-4. Add a very small table renderer, but only for simple fixed-width tables.
-5. Add tests for wrapping, pagination, escaping, and unsupported tags.
-
-Avoid adding general CSS, flexbox, grid, floats, or browser-like image layout. Those would turn this into a much larger rendering engine.
+For validation against the previous solution, compare the generated PDFs at the level of visible content, ordering, typography similarity, major spacing, images, headings, lists, and button/table structure. Pixel-perfect browser-CSS fidelity is out of scope for this small POC.
