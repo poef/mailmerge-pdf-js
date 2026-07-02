@@ -75,11 +75,13 @@ For normal Dutch text this is acceptable for a first prototype. The renderer nor
 
 ## Where to extend next
 
+See [`ROADMAP.md`](ROADMAP.md) for the production-readiness roadmap.
+
 Good next steps, in order:
 
 1. Move `DEFAULT_STYLES` to a public template configuration object.
 2. Add fixed header/footer support.
-3. Add optional custom embedded font support.
+3. Add custom embedded font support with `@pdf-lib/fontkit`, because schools often need their own house style font.
 4. Add a very small table renderer, but only for simple fixed-width tables.
 5. Add tests for wrapping, pagination, escaping, and unsupported tags.
 
